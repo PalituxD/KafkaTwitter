@@ -1,0 +1,56 @@
+package org.palituxd.kafkapoc.consumer;
+
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.serialization.LongDeserializer;
+import org.palituxd.kafkapoc.KafkaConstants;
+import org.palituxd.kafkapoc.exchange.CustomDeserializer;
+import org.palituxd.kafkapoc.model.CustomObject;
+
+import java.util.Collections;
+import java.util.Properties;
+
+public class CustomKafkaConsumer {
+
+    public void run() {
+        Consumer<Long, CustomObject> consumer = getConsumer();
+        int noMessageFound = 0;
+        while (true) {
+            ConsumerRecords<Long, CustomObject> consumerRecords = consumer.poll(1000);
+            // 1000 is the time in milliseconds consumer will wait if no record is found at broker.
+            if (consumerRecords.count() == 0) {
+                noMessageFound++;
+                if (noMessageFound > KafkaConstants.MAX_NO_MESSAGE_FOUND_COUNT)
+                    // If no message found count is reached to threshold exit loop.
+                    break;
+                else
+                    continue;
+            }
+            //print each record.
+            consumerRecords.forEach(record -> {
+                System.out.println("Record Key " + record.key());
+                System.out.println("Record value " + record.value());
+                System.out.println("Record partition " + record.partition());
+                System.out.println("Record offset " + record.offset());
+            });
+            // commits the offset of record to broker.
+            consumer.commitAsync();
+        }
+        consumer.close();
+    }
+
+    private Consumer<Long, CustomObject> getConsumer() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KafkaConstants.KAFKA_BROKERS);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaConstants.GROUP_ID_CONFIG);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, CustomDeserializer.class.getName());
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, KafkaConstants.MAX_POLL_RECORDS);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, KafkaConstants.OFFSET_RESET_EARLIER);
+        Consumer<Long, CustomObject> consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList(KafkaConstants.TOPIC_NAME));
+        return consumer;
+    }
+}
