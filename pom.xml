@@ -41,17 +41,32 @@
       <version>2.8.5</version>
     </dependency>
       <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.6</version>
+        <scope>provided</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
+    <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>mongo-java-driver</artifactId>
+        <version>3.10.2</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.ibm.watson/ibm-watson -->
+    <dependency>
+      <groupId>com.ibm.watson</groupId>
+      <artifactId>ibm-watson</artifactId>
+      <version>7.0.0</version>
+    </dependency>
+
+
+
+    <!-- https://mvnrepository.com/artifact/com.google.cloud/google-cloud-language -->
       <dependency>
-          <groupId>org.projectlombok</groupId>
-          <artifactId>lombok</artifactId>
-          <version>1.18.6</version>
-          <scope>provided</scope>
-      </dependency>
-      <!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
-      <dependency>
-          <groupId>org.mongodb</groupId>
-          <artifactId>mongo-java-driver</artifactId>
-          <version>3.10.2</version>
+          <groupId>com.google.cloud</groupId>
+          <artifactId>google-cloud-language</artifactId>
+          <version>LATEST</version>
       </dependency>
   </dependencies>
 

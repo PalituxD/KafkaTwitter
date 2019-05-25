@@ -1,7 +1,9 @@
 package org.palituxd.twitterkafkapoc.model;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Builder;
 
+@Builder
 public class User {
     private long id;
     private String name;

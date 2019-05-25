@@ -1,14 +1,10 @@
 package org.palituxd.twitterkafkapoc.consumer;
 
-import com.mongodb.client.MongoCollection;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.bson.Document;
 import org.palituxd.kafkapoc.KafkaConstants;
+import org.palituxd.twitterkafkapoc.TwitterConstants;
 import org.palituxd.twitterkafkapoc.exchange.TweetDeserializer;
 import org.palituxd.twitterkafkapoc.model.Tweet;
 import org.palituxd.twitterkafkapoc.services.StoreService;
@@ -28,29 +24,14 @@ public class TwitterKafkaConsumer {
             while (true) {
                 System.out.println("Waiting " + noMessageFound + " for:" + Calendar.getInstance().getTimeInMillis());
                 ConsumerRecords<Long, Tweet> consumerRecords = consumer.poll(Duration.ofSeconds(1l));
-                // 1000 is the time in milliseconds consumer will wait if no record is found at broker.
                 if (consumerRecords.count() == 0) {
                     noMessageFound++;
                     if (noMessageFound > KafkaConstants.MAX_NO_MESSAGE_FOUND_COUNT)
-                        // If no message found count is reached to threshold exit loop.
                         break;
                     else
                         continue;
                 }
-                //print each record.
-                consumerRecords.forEach(record -> {
-                    System.out.println("Record Key " + record.key());
-                    System.out.println("Record value " + record.value());
-                    System.out.println("Record partition " + record.partition());
-                    System.out.println("Record offset " + record.offset());
-
-                    MongoCollection<Document> coll = StoreService.getInstance().getTwitterDatabase().getCollection("Tweets");
-                    Document emp1 = new Document();
-                    emp1.put("key", record.value().getId());
-                    emp1.put("value", record.value().toString());
-                    coll.insertOne(emp1);
-                });
-                // commits the offset of record to broker.
+                manageConsumerRecords(consumerRecords);
                 consumer.commitAsync();
             }
         } catch (Exception e) {
@@ -60,6 +41,34 @@ public class TwitterKafkaConsumer {
                 consumer.close();
             }
         }
+    }
+
+    private void manageConsumerRecords(ConsumerRecords<Long, Tweet> consumerRecords){
+        consumerRecords.forEach(record -> {
+            print(record);
+            Tweet tweet = record.value();
+            if (tweet.getId() > 0) {
+                saveTweet(tweet);
+            }
+        });
+    }
+
+    private void print(ConsumerRecord record){
+        System.out.println("Record Key " + record.key());
+        System.out.println("Record value " + record.value());
+        System.out.println("Record partition " + record.partition());
+        System.out.println("Record offset " + record.offset());
+    }
+
+    private void saveTweet(Tweet tweet){
+        Document document = new Document();
+        document.put("id", tweet.getId());
+        document.put("userId", tweet.getUser().getId());
+        document.put("userName", tweet.getUser().getName());
+        document.put("tweet", tweet.getText());
+        document.put("lang", tweet.getLang());
+        document.put("hashtag", TwitterConstants.HASHTAG);
+        StoreService.getInstance().insertOne(document);
     }
 
     private Consumer<Long, Tweet> getConsumer() {
